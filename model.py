@@ -8,7 +8,7 @@ import os
 #hyperparameters
 vocab_size = 3
 block_size = 361
-max_iters = 10 #8p size
+max_iters = 0 #8p size
 eval_interval = 5
 learning_rate = 3e-4
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -56,10 +56,11 @@ def game_from_csv(csv): #gets batch
  
     return x,y # tensor of (game_len-1, 361) corresopnding to board states
 
-def moves_to_tensor(moves):
-    # Initialize an empty tensor
+def moves_to_tensor(moves,board=None):
+    # Initialize a tensor (board)
     tensor = torch.zeros((1, 361)).long()
-    
+    if board != None:
+        tensor = board
     # Define board size
     board_size = 19
 
@@ -81,7 +82,7 @@ def moves_to_tensor(moves):
 
     return tensor
 
-def input_moves(): #terminal input to tensor
+def input_moves(prev_board=None): #terminal input to tensor
     # Prompt user for a list of moves
     moves= input("Enter a list of moves, separated by spaces: ")
 
@@ -89,8 +90,8 @@ def input_moves(): #terminal input to tensor
     moves = moves.split()
 
     # Convert moves to tensor
-    tensor = moves_to_tensor(moves)
-
+    tensor = moves_to_tensor(moves,board=prev_board)
+    display_board(tensor)
     return tensor
 
 def display_board(tensor):
@@ -198,8 +199,12 @@ class Transformer(nn.Module):
         logits = logits.view(B,T,C) 
         return logits, loss
 
-    def generate(self):
-        board = input_moves()
+    def generate(self, input=None):
+        board = None
+        if input == None:
+            board = input_moves()
+        else:
+            board = input
         logits,loss = self(board)
         logits = F.softmax(logits, dim=-1)
         sampled_indices = torch.multinomial(logits[0], 1).view(1,361)
