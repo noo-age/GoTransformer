@@ -8,7 +8,7 @@ from model import Transformer
 
 vocab_size = 3
 block_size = 361
-max_iters = 10 #8p size
+max_iters = 0 #8p size
 eval_interval = 5
 learning_rate = 3e-4
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -56,10 +56,11 @@ def game_from_csv(csv): #gets batch
  
     return x,y # tensor of (game_len-1, 361) corresopnding to board states
 
-def moves_to_tensor(moves):
-    # Initialize an empty tensor
-    tensor = torch.zeros((1, 361)).long()
-    
+def moves_to_tensor(moves,board=None):
+    # Initialize a tensor (board)
+    tensor = torch.zeros((1, 361),dtype=torch.int,device=device).long()
+    if board != None:
+        tensor = board
     # Define board size
     board_size = 19
 
@@ -81,7 +82,7 @@ def moves_to_tensor(moves):
 
     return tensor
 
-def input_moves(): #terminal input to tensor
+def input_moves(prev_board=None): #terminal input to tensor
     # Prompt user for a list of moves
     moves= input("Enter a list of moves, separated by spaces: ")
 
@@ -89,8 +90,8 @@ def input_moves(): #terminal input to tensor
     moves = moves.split()
 
     # Convert moves to tensor
-    tensor = moves_to_tensor(moves)
-
+    tensor = moves_to_tensor(moves,board=prev_board)
+    display_board(tensor)
     return tensor
 
 def display_board(tensor):
@@ -135,6 +136,8 @@ net.to(device)
 optimizer = torch.optim.AdamW(net.parameters(), lr=learning_rate)
 if input("load model: y/n") == "y":
     net.load_state_dict(torch.load(path))
+total_params = sum(p.numel() for p in net.parameters())
+print(total_params)
 
 start = time.time()
 train_losses = []
@@ -158,10 +161,12 @@ for iter in range(max_iters):
         if abs(losses['train'] - losses['test']) > divergence * losses['test']:
             print("aborted training due to overfitting")
             break
-
-
-print(net.generate())
+        
 torch.save(net.state_dict(),path)
-
 end = time.time()
 print("time elapsed: ", end-start)
+
+board = torch.zeros((1,361),device=device,dtype=torch.int)
+while True:
+    board = net.generate(input_moves(prev_board=board))
+    
