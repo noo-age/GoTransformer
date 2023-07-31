@@ -17,12 +17,14 @@ def sgf_to_csv(sgf_file, csv_file):
         for move in moves:
             writer.writerow(move)
 
-directory_path = 'Pro/9p' # replace it with your directory path
+directory_path = '9d/' # replace it with your directory path
 all_files = os.listdir(directory_path)
 
 count = 0
 for file in all_files:
-    sgf_to_csv('Pro/9p/' + file, 'CSV/' + '9p/' + str(count) + '.csv')
+    if count == 57:
+        continue
+    sgf_to_csv(directory_path + file, 'CSV/' + '9d/' + str(count) + '.csv')
     count += 1
 
     
