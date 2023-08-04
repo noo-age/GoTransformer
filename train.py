@@ -6,21 +6,16 @@ import time
 import os
 from model import Transformer
 
-vocab_size = 3
-block_size = 361
-max_iters = 0 #8p size
+max_iters = 6 #8p size
 eval_interval = 5
 learning_rate = 3e-4
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
 eval_iters = 5
-n_embd = 256
-dropout = .1
-n_heads = 1
-n_layer = 1
 divergence = 0.2
 
 directory = 'CSV/8p/'
 path = 'Models/07-31.pth'
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def place(s):
     return ord(s[0])-97 + (ord(s[1])-97)*19
